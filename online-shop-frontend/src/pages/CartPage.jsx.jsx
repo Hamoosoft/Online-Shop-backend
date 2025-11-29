@@ -1,57 +1,29 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function CartPage({
   cartItems,
   removeFromCart,
   updateQuantity,
+  authUser,
 }) {
+  const navigate = useNavigate();
+
   const totalPrice = cartItems.reduce(
     (sum, item) => sum + Number(item.price) * item.quantity,
     0
   );
 
-  const handleCheckout = async () => {
+  const handleGoToCheckout = () => {
     if (cartItems.length === 0) {
       alert("Dein Warenkorb ist leer.");
       return;
     }
-
-    const customerName = prompt("Bitte deinen Namen eingeben:");
-    const customerEmail = prompt("Bitte deine E-Mail eingeben:");
-
-    if (!customerName || !customerEmail) {
-      alert("Name und E-Mail sind erforderlich.");
+    if (!authUser) {
+      alert("Bitte melde dich zuerst an, um zu bestellen.");
+      navigate("/login");
       return;
     }
-
-    const orderRequest = {
-      customerName,
-      customerEmail,
-      items: cartItems.map((item) => ({
-        productId: item.id,
-        quantity: item.quantity,
-      })),
-    };
-
-    try {
-      const response = await fetch("http://localhost:9090/api/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(orderRequest),
-      });
-
-      if (!response.ok) {
-        throw new Error("Fehler beim Absenden der Bestellung");
-      }
-
-      const data = await response.json();
-      alert("Bestellung erfolgreich! Bestellnummer: " + data.id);
-      // optional: hier den Warenkorb leeren
-    } catch (err) {
-      alert("Fehler: " + err.message);
-    }
+    navigate("/checkout");
   };
 
   return (
@@ -59,7 +31,7 @@ export default function CartPage({
       <div className="page-header">
         <h2>Warenkorb</h2>
         <p className="subheading">
-          Prüfe deine Artikel und gehe zur Kasse.
+          Prüfe deine Artikel. Den nächsten Schritt (Adresse & Zahlung) machst du im Checkout.
         </p>
       </div>
 
@@ -141,7 +113,7 @@ export default function CartPage({
 
               <button
                 className="btn btn-primary btn-block"
-                onClick={handleCheckout}
+                onClick={handleGoToCheckout}
               >
                 Zur Kasse
               </button>

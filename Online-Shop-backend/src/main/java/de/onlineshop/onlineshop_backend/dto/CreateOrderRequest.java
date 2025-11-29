@@ -6,6 +6,8 @@ public class CreateOrderRequest {
 
     private String customerName;
     private String customerEmail;
+    private Long addressId;
+    private String paymentMethod;
     private List<OrderItemRequest> items;
 
     // --- Getter/Setter ---
