@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # --- Service 1 : La Base de Données ---
+  postgres:
+    image: postgres:13-alpine
+    container_name: shop-db-prod
+    environment:
+      POSTGRES_DB: online_shop
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5435:5432"  # Port externe 5435 pour éviter les conflits
+    networks:
+      - shop-network
+
+  # --- Service 2 : Le Backend (Java) ---
+  backend:
+    image: mon-backend-image
+    container_name: shop-backend-prod
+    ports:
+      - "9090:9090"
+    depends_on:
+      - postgres
+    environment:
+      # L'astuce : on connecte Java directement au service "postgres"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/online_shop
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: admin
+    networks:
+      - shop-network
+
+  # --- Service 3 : Le Frontend (React/Nginx) ---
+  frontend:
+    image: mon-frontend-image
+    container_name: shop-frontend-prod
+    ports:
+      - "80:80"  # Accessible sur http://localhost (port 80)
+    networks:
+      - shop-network
+
+# Réseau privé pour que les conteneurs discutent entre eux
+networks:
+  shop-network:
+    driver: bridge

@@ -37,7 +37,7 @@ export default function AdminProductsPage({ authUser }) {
     setLoading(true);
     setError("");
     try {
-      const resp = await fetch("http://localhost:9090/api/admin/products", {
+      const resp = await fetch("/api/admin/products", {
         headers: {
           Authorization: `Bearer ${authUser.token}`,
         },
@@ -86,7 +86,7 @@ export default function AdminProductsPage({ authUser }) {
 
     try {
       const resp = await fetch(
-        `http://localhost:9090/api/admin/products/${id}`,
+        `/api/admin/products/${id}`,
         {
           method: "DELETE",
           headers: {
@@ -122,8 +122,8 @@ export default function AdminProductsPage({ authUser }) {
 
     try {
       const url = editingId
-        ? `http://localhost:9090/api/admin/products/${editingId}`
-        : "http://localhost:9090/api/admin/products";
+        ? `/api/admin/products/${editingId}`
+        : "/api/admin/products";
       const method = editingId ? "PUT" : "POST";
 
       const resp = await fetch(url, {

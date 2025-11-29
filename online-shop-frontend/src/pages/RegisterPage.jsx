@@ -21,7 +21,7 @@ export default function RegisterPage({ onRegisterSuccess }) {
 
     setLoading(true);
     try {
-      const resp = await fetch("http://localhost:9090/api/auth/register", {
+      const resp = await fetch("h/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),

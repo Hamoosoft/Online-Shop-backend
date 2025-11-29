@@ -15,7 +15,7 @@ export default function ProductDetailsPage({ onAddToCart }) {
       setError("");
 
       try {
-        const resp = await fetch(`http://localhost:9090/api/products/${id}`);
+        const resp = await fetch(`/api/products/${id}`);
         if (!resp.ok) {
           const text = await resp.text();
           throw new Error(text || "Produkt konnte nicht geladen werden");

@@ -31,7 +31,7 @@ export default function ProfilePage({ authUser }) {
     setSavingProfile(true);
 
     try {
-      const response = await fetch("http://localhost:9090/api/users/me", {
+      const response = await fetch("/api/users/me", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -81,7 +81,7 @@ export default function ProfilePage({ authUser }) {
 
     try {
       const response = await fetch(
-        "http://localhost:9090/api/users/me/password",
+        "/api/users/me/password",
         {
           method: "PUT",
           headers: {

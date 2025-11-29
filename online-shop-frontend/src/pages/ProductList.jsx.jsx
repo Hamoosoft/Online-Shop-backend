@@ -16,7 +16,7 @@ export default function ProductList({ onAddToCart }) {
       setError("");
 
       try {
-        const response = await fetch("http://localhost:9090/api/products");
+        const response = await fetch("/api/products");
         if (!response.ok) {
           const text = await response.text();
           throw new Error(text || "Fehler beim Laden der Produkte");

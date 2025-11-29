@@ -35,7 +35,7 @@ export default function AddressesPage({ authUser }) {
     setLoading(true);
     setError("");
     try {
-      const resp = await fetch("http://localhost:9090/api/addresses", {
+      const resp = await fetch("/api/addresses", {
         headers: {
           Authorization: `Bearer ${authUser.token}`,
         },
@@ -94,7 +94,7 @@ export default function AddressesPage({ authUser }) {
     if (!window.confirm("Adresse wirklich löschen?")) return;
 
     try {
-      const resp = await fetch(`http://localhost:9090/api/addresses/${id}`, {
+      const resp = await fetch(`/api/addresses/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${authUser.token}`,
@@ -123,8 +123,8 @@ export default function AddressesPage({ authUser }) {
 
     try {
       const url = editingId
-        ? `http://localhost:9090/api/addresses/${editingId}`
-        : "http://localhost:9090/api/addresses";
+        ? `/api/addresses/${editingId}`
+        : "/api/addresses";
       const method = editingId ? "PUT" : "POST";
 
       const resp = await fetch(url, {
@@ -154,7 +154,7 @@ export default function AddressesPage({ authUser }) {
   const markAsDefault = async (id) => {
     try {
       const resp = await fetch(
-        `http://localhost:9090/api/addresses/${id}/default`,
+        `/api/addresses/${id}/default`,
         {
           method: "PUT",
           headers: {

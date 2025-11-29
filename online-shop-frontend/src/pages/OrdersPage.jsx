@@ -33,7 +33,7 @@ export default function OrdersPage({ authUser }) {
 
       try {
         const response = await fetch(
-          `http://localhost:9090/api/orders?email=${encodeURIComponent(
+          `/api/orders?email=${encodeURIComponent(
             authUser.email
           )}`
         );

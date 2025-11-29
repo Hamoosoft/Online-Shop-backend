@@ -31,7 +31,7 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
       setLoadingAddresses(true);
       setError("");
       try {
-        const resp = await fetch("http://localhost:9090/api/addresses", {
+        const resp = await fetch("/api/addresses", {
           headers: {
             Authorization: `Bearer ${authUser.token}`,
           },
@@ -90,7 +90,7 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
         })),
       };
 
-      const resp = await fetch("http://localhost:9090/api/orders", {
+      const resp = await fetch("/api/orders", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

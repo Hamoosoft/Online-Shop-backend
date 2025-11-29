@@ -23,7 +23,7 @@ export default function AdminOrdersPage({ authUser }) {
       setLoading(true);
       setError("");
       try {
-        const resp = await fetch("http://localhost:9090/api/admin/orders", {
+        const resp = await fetch("/api/admin/orders", {
           headers: {
             Authorization: `Bearer ${authUser.token}`,
           },
