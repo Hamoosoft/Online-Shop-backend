@@ -133,7 +133,7 @@ export default function ProfilePage({ authUser }) {
                 disabled
               />
               <p className="form-hint">
-                Die E-Mail-Adresse ist dein Login-Name.
+                Die E-Mail-Adresse ist Ihr Login-Name.
               </p>
             </div>
 

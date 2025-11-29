@@ -5,6 +5,7 @@ import {
   Link,
   NavLink,
   useNavigate,
+  useLocation,
 } from "react-router-dom";
 import ProductList from "./pages/ProductList.jsx";
 import ProductDetail from "./pages/ProductDetail.jsx";
@@ -17,11 +18,17 @@ import OrderSuccessPage from "./pages/OrderSuccessPage.jsx";
 import AddressesPage from "./pages/AddressesPage.jsx";
 import CheckoutPage from "./pages/CheckoutPage.jsx";
 
+// NEU:
+import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
+import AdminProductsPage from "./pages/AdminProductsPage.jsx";
+import AdminOrdersPage from "./pages/AdminOrdersPage.jsx";
+
 function App() {
   const [cartItems, setCartItems] = useState([]);
   const [authUser, setAuthUser] = useState(null);
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const stored = localStorage.getItem("authUser");
@@ -86,7 +93,7 @@ function App() {
       token: authResponse.token,
       email: authResponse.email,
       name: authResponse.name,
-      role: authResponse.role,
+      role: authResponse.role, // wichtig für Admin
     };
     setAuthUser(user);
     localStorage.setItem("authUser", JSON.stringify(user));
@@ -104,35 +111,43 @@ function App() {
     navigate(`/order-success/${orderId}`);
   };
 
+  const isAdmin = authUser && authUser.role === "ADMIN";
+
   return (
     <div className="app-root">
       <header className="app-header">
         <nav className="navbar">
+          {/* Brand links */}
           <div className="navbar-left">
             <Link to="/" className="navbar-brand">
-              HSIG Onlineshopping
+              <span className="brand-badge">HSIG</span>
+              <span className="brand-text">Onlineshopping</span>
             </Link>
           </div>
 
+          {/* Haupt-Navigation in der Mitte */}
           <div className="navbar-center">
             <NavLink
               to="/"
+              end
               className={({ isActive }) =>
                 "nav-tab" + (isActive ? " active" : "")
               }
             >
+              <span className="nav-tab-icon">🛒</span>
               Produkte
             </NavLink>
 
             {authUser && (
               <>
                 <NavLink
-                  to="/profile"
+                  to="/orders"
                   className={({ isActive }) =>
                     "nav-tab" + (isActive ? " active" : "")
                   }
                 >
-                  Mein Profil
+                  <span className="nav-tab-icon">📦</span>
+                  Bestellungen
                 </NavLink>
                 <NavLink
                   to="/addresses"
@@ -140,20 +155,36 @@ function App() {
                     "nav-tab" + (isActive ? " active" : "")
                   }
                 >
+                  <span className="nav-tab-icon">📍</span>
                   Adressen
                 </NavLink>
                 <NavLink
-                  to="/orders"
+                  to="/profile"
                   className={({ isActive }) =>
                     "nav-tab" + (isActive ? " active" : "")
                   }
                 >
-                  Bestellungen
+                  <span className="nav-tab-icon">👤</span>
+                  Mein Profil
                 </NavLink>
               </>
             )}
+
+            {/* Admin-Tab nur für ADMIN */}
+            {isAdmin && (
+              <NavLink
+                to="/admin"
+                className={({ isActive }) =>
+                  "nav-tab" + (isActive ? " active" : "")
+                }
+              >
+                <span className="nav-tab-icon">🛠</span>
+                Admin
+              </NavLink>
+            )}
           </div>
 
+          {/* Rechts: Login/Logout + Warenkorb */}
           <div className="navbar-right">
             {authUser ? (
               <div className="nav-auth-user">
@@ -188,7 +219,7 @@ function App() {
               </div>
             )}
 
-            <Link to="/cart" className="nav-link nav-cart">
+            <Link to="/cart" className="nav-cart">
               🧺
               {totalItemsCount > 0 && (
                 <span className="cart-badge">{totalItemsCount}</span>
@@ -197,19 +228,47 @@ function App() {
           </div>
         </nav>
 
-        <div className="hero">
-          <div className="container">
+        {/* Hero NUR auf der Startseite "/" */}
+        {location.pathname === "/" && (
+          <div className="hero">
             <div className="hero-content">
-              <h1>HSIG Onlineshopping</h1>
+              <span className="hero-chip">HSIG Projekt · Online-Shop</span>
+              <h1>Willkommen bei HSIG Onlineshopping</h1>
               <p>
-                Online-Shop Projekt der HSIG: Produkte ansehen, in den Warenkorb legen und bestellen.
+                Online-Shop Projekt der HSIG: Produkte ansehen, in den
+                Warenkorb legen, bestellen und Bestellungen verwalten.
               </p>
-              <Link to="/" className="btn btn-primary">
-                Produkte entdecken
-              </Link>
+              <div className="hero-buttons">
+                <Link to="/" className="btn btn-primary hero-main-btn">
+                  Produkte entdecken
+                </Link>
+                {authUser && (
+                  <Link to="/orders" className="btn btn-secondary">
+                    Meine Bestellungen
+                  </Link>
+                )}
+              </div>
+
+              <div className="hero-stats">
+                
+                <div className="hero-stat-card">
+                  <div className="hero-stat-icon">🔐</div>
+                  <div className="hero-stat-title">Benutzerkonten</div>
+                  <div className="hero-stat-text">
+                    Registrierung, Login, Profil & Adressverwaltung.
+                  </div>
+                </div>
+                <div className="hero-stat-card">
+                  <div className="hero-stat-icon">🧾</div>
+                  <div className="hero-stat-title">Bestellungen</div>
+                  <div className="hero-stat-text">
+                    Warenkorb, Checkout, Bestellübersicht mit Status.
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </header>
 
       <main className="main-content">
@@ -250,7 +309,9 @@ function App() {
             />
             <Route
               path="/register"
-              element={<RegisterPage onRegisterSuccess={handleLoginSuccess} />}
+              element={
+                <RegisterPage onRegisterSuccess={handleLoginSuccess} />
+              }
             />
             <Route
               path="/profile"
@@ -268,12 +329,28 @@ function App() {
               path="/order-success/:orderId"
               element={<OrderSuccessPage authUser={authUser} />}
             />
+
+            {/* Admin-Routen – nur sinnvoll, wenn isAdmin true */}
+            <Route
+              path="/admin"
+              element={<AdminDashboardPage authUser={authUser} />}
+            />
+            <Route
+              path="/admin/products"
+              element={<AdminProductsPage authUser={authUser} />}
+            />
+            <Route
+              path="/admin/orders"
+              element={<AdminOrdersPage authUser={authUser} />}
+            />
           </Routes>
         </div>
       </main>
 
       <footer className="footer">
-         <p>© {new Date().getFullYear()} HSIG Onlineshopping – Gruppenprojekt</p>
+        <p>
+          © {new Date().getFullYear()} HSIG Onlineshopping – Gruppenprojekt
+        </p>
       </footer>
     </div>
   );

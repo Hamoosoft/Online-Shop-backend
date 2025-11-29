@@ -1,95 +1,167 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 
-export default function ProductDetail({ onAddToCart }) {
+export default function ProductDetailsPage({ onAddToCart }) {
   const { id } = useParams();
+  const navigate = useNavigate();
+
   const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch(`http://localhost:9090/api/products/${id}`)
-      .then((response) => {
-        if (response.status === 404) {
-          throw new Error("Produkt nicht gefunden");
+    const loadProduct = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const resp = await fetch(`http://localhost:9090/api/products/${id}`);
+        if (!resp.ok) {
+          const text = await resp.text();
+          throw new Error(text || "Produkt konnte nicht geladen werden");
         }
-        if (!response.ok) {
-          throw new Error("Fehler beim Laden des Produkts");
-        }
-        return response.json();
-      })
-      .then((data) => {
+        const data = await resp.json();
         setProduct(data);
+      } catch (err) {
+        setError(err.message || "Unbekannter Fehler");
+      } finally {
         setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
+      }
+    };
+
+    loadProduct();
   }, [id]);
 
+  const handleAddToCartClick = () => {
+    if (product && onAddToCart) {
+      onAddToCart(product);
+    }
+  };
+
   if (loading) {
-    return <p className="info-text">Produkt wird geladen...</p>;
+    return <p className="info-text">Produkt wird geladen…</p>;
   }
 
   if (error) {
     return (
-      <div>
+      <div className="card">
         <p className="info-text error">Fehler: {error}</p>
-        <Link to="/" className="link-inline">
-          ← Zurück zur Produktliste
-        </Link>
+        <button className="btn btn-secondary" onClick={() => navigate(-1)}>
+          Zurück
+        </button>
       </div>
     );
   }
 
   if (!product) {
     return (
-      <div>
+      <div className="card">
         <p className="info-text">Kein Produkt gefunden.</p>
-        <Link to="/" className="link-inline">
-          ← Zurück zur Produktliste
-        </Link>
+        <button className="btn btn-secondary" onClick={() => navigate(-1)}>
+          Zurück
+        </button>
       </div>
     );
   }
 
-  return (
-    <div>
-      <Link to="/" className="link-inline">
-        ← Zurück zur Produktliste
-      </Link>
+  const price = Number(product.price || 0).toFixed(2);
 
-      <div className="product-detail">
-        <div className="product-detail-image">
+  return (
+    <div className="product-detail-page">
+      {/* Breadcrumb */}
+      <div className="product-detail-breadcrumb">
+        <Link to="/" className="link-muted">
+          Start
+        </Link>
+        <span>›</span>
+        <Link to="/products" className="link-muted">
+          Produkte
+        </Link>
+        <span>›</span>
+        <span>{product.name}</span>
+      </div>
+
+      <div className="product-detail-layout card">
+        {/* Bildbereich */}
+        <div className="product-detail-image-wrap">
           {product.imageUrl ? (
             <img
               src={product.imageUrl}
               alt={product.name}
-              className="product-image-large"
+              className="product-detail-image"
             />
           ) : (
-            <div className="product-placeholder large">Kein Bild</div>
+            <div className="product-detail-placeholder">
+              Kein Bild vorhanden
+            </div>
           )}
         </div>
 
+        {/* Info-Bereich */}
         <div className="product-detail-info">
-          <h1>{product.name}</h1>
+          <h2 className="product-detail-title">{product.name}</h2>
+
+          <div className="product-detail-meta">
+            <span className="product-detail-badge">
+              HSIG Onlineshopping
+            </span>
+            {product.category && (
+              <span className="product-detail-badge secondary">
+                Kategorie: {product.category}
+              </span>
+            )}
+          </div>
+
           <p className="product-detail-description">
-            {product.description || "Keine Beschreibung verfügbar."}
+            {product.description || "Keine Beschreibung vorhanden."}
           </p>
 
-          <p className="product-detail-price">
-            Preis:{" "}
-            <strong>{Number(product.price).toFixed(2)} €</strong>
-          </p>
+          <div className="product-detail-bottom">
+            <div className="product-detail-price-block">
+              <span className="product-detail-price">{price} €</span>
+              {product.stock != null && (
+                <span className="product-detail-stock">
+                  {product.stock > 0
+                    ? `${product.stock} Stück verfügbar`
+                    : "Aktuell nicht verfügbar"}
+                </span>
+              )}
+            </div>
 
-          <button
-            className="btn btn-primary"
-            onClick={() => onAddToCart(product)}
-          >
-            In den Warenkorb
-          </button>
+            <div className="product-detail-actions">
+              <button
+                className="btn btn-primary"
+                onClick={handleAddToCartClick}
+                disabled={product.stock === 0}
+              >
+                In den Warenkorb
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => navigate(-1)}
+              >
+                Zurück
+              </button>
+            </div>
+          </div>
+
+          {/* Optional: technische Details / Eigenschaften, falls vorhanden */}
+          {(product.brand || product.sku) && (
+            <div className="product-detail-extra">
+              {product.brand && (
+                <div className="product-detail-extra-row">
+                  <span>Marke</span>
+                  <span>{product.brand}</span>
+                </div>
+              )}
+              {product.sku && (
+                <div className="product-detail-extra-row">
+                  <span>Artikel-Nr.</span>
+                  <span>{product.sku}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

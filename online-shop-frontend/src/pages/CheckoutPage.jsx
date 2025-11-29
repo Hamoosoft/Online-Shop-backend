@@ -8,7 +8,7 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
   const [addresses, setAddresses] = useState([]);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState("INVOICE"); // INVOICE, CARD, PAYPAL (Demo)
+  const [paymentMethod, setPaymentMethod] = useState("INVOICE"); // INVOICE, CARD, PAYPAL
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -83,7 +83,7 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
         customerName,
         customerEmail,
         addressId: selectedAddressId,
-        paymentMethod, // z. B. "INVOICE", "CARD", "PAYPAL"
+        paymentMethod,
         items: cartItems.map((item) => ({
           productId: item.id,
           quantity: item.quantity,
@@ -124,11 +124,11 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
       <div className="page-header">
         <h2>Checkout</h2>
         <p className="subheading">
-          Schritt {step} von 3 – Lieferadresse, Zahlungsmethode & Bestellübersicht.
+          Schritt {step} von 3 – Lieferadresse, Zahlungsmethode & Bestellübersicht für HSIG Onlineshopping.
         </p>
       </div>
 
-      {/* Step Indicator */}
+      {/* Schrittanzeige */}
       <div className="checkout-steps card">
         <div className={"checkout-step" + (step >= 1 ? " active" : "")}>
           <div className="checkout-step-number">1</div>
@@ -152,9 +152,10 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
 
       <div className="checkout-layout">
         <div className="checkout-main">
+          {/* STEP 1: Adressen */}
           {step === 1 && (
             <div className="card">
-              <h3>Lieferadresse wählen</h3>
+              <h3 className="section-title">Lieferadresse wählen</h3>
               {loadingAddresses && (
                 <p className="info-text">Adressen werden geladen…</p>
               )}
@@ -204,15 +205,16 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
                   ))}
                 </div>
               )}
-              <p className="info-text" style={{ marginTop: "0.5rem" }}>
+              <p className="form-hint" style={{ marginTop: "0.5rem" }}>
                 Du kannst Adressen im Bereich „Adressen“ verwalten.
               </p>
             </div>
           )}
 
+          {/* STEP 2: Payment */}
           {step === 2 && (
             <div className="card">
-              <h3>Zahlungsmethode</h3>
+              <h3 className="section-title">Zahlungsmethode</h3>
               <div className="payment-options">
                 <label className="payment-option">
                   <input
@@ -225,7 +227,7 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
                   <div>
                     <div className="payment-title">Rechnung</div>
                     <div className="payment-desc">
-                      Zahlung auf Rechnung (Demo).
+                      Zahlung auf Rechnung – ideal für das Projekt.
                     </div>
                   </div>
                 </label>
@@ -257,7 +259,7 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
                   <div>
                     <div className="payment-title">PayPal (Demo)</div>
                     <div className="payment-desc">
-                      Simulierte PayPal-Zahlung im Projekt.
+                      Simulierte PayPal-Zahlung für HSIG Onlineshopping.
                     </div>
                   </div>
                 </label>
@@ -265,9 +267,10 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
             </div>
           )}
 
+          {/* STEP 3: Übersicht */}
           {step === 3 && (
             <div className="card">
-              <h3>Bestellübersicht</h3>
+              <h3 className="section-title">Bestellübersicht</h3>
 
               <h4>Artikel</h4>
               <div className="checkout-items">
@@ -326,13 +329,13 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
         {/* Rechte Spalte: Gesamtsumme + Buttons */}
         <aside className="checkout-sidebar">
           <div className="card">
-            <h3>Gesamtbetrag</h3>
+            <h3 className="section-title">Gesamtbetrag</h3>
             <p>
               Zwischensumme:{" "}
               <strong>{totalPrice.toFixed(2)} €</strong>
             </p>
-            <p className="info-text">
-              (Alle Preise inkl. Demo-MwSt 😉)
+            <p className="form-hint">
+              (Alle Preise sind Demo-Preise für das HSIG-Projekt 😉)
             </p>
 
             <div className="checkout-actions">
