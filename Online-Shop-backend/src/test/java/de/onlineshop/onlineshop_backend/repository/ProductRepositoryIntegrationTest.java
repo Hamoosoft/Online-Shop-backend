@@ -21,7 +21,7 @@ class ProductRepositoryIntegrationTest {
         List<Product> products = productRepository.findAll();
 
         // assert
-        assertThat(products).isNotNull();
+        assertThat(products).isNull();
         assertThat(products.size()).isGreaterThanOrEqualTo(3);
     }
 }
