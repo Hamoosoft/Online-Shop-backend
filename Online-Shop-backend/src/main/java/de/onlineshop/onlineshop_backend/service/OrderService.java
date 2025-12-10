@@ -5,6 +5,10 @@ import de.onlineshop.onlineshop_backend.dto.OrderResponse;
 import de.onlineshop.onlineshop_backend.model.Order;
 import de.onlineshop.onlineshop_backend.model.OrderItem;
 import de.onlineshop.onlineshop_backend.model.Product;
+import de.onlineshop.onlineshop_backend.payment.PaymentClient;
+import de.onlineshop.onlineshop_backend.payment.PaymentRequest;
+import de.onlineshop.onlineshop_backend.payment.PaymentResponse;
+import de.onlineshop.onlineshop_backend.payment.PaymentStatus;
 import de.onlineshop.onlineshop_backend.repository.OrderRepository;
 import de.onlineshop.onlineshop_backend.repository.ProductRepository;
 import org.springframework.stereotype.Service;
@@ -12,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -19,11 +24,14 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final PaymentClient paymentClient;
 
     public OrderService(OrderRepository orderRepository,
-                        ProductRepository productRepository) {
+                        ProductRepository productRepository,
+                        PaymentClient paymentClient) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
+        this.paymentClient = paymentClient;
     }
 
     @Transactional
@@ -53,7 +61,42 @@ public class OrderService {
             order.addItem(item);
         }
 
+        // -------------------------------
+        // NEU: Payment-Service aufrufen
+        // -------------------------------
+        // Temporäre Order-ID für den Payment-Service
+        String tempOrderId = UUID.randomUUID().toString();
+
+        PaymentRequest paymentRequest = new PaymentRequest(
+                total,
+                "EUR",
+                tempOrderId,
+                request.getCustomerEmail(),
+                "CREDIT_CARD"
+        );
+
+        PaymentResponse paymentResponse;
+        try {
+            paymentResponse = paymentClient.charge(paymentRequest);
+        } catch (Exception ex) {
+            // Resilienz-Verhalten: Payment-Service nicht erreichbar
+            throw new IllegalStateException("Zahlungsservice aktuell nicht erreichbar.", ex);
+        }
+
+        if (paymentResponse == null || paymentResponse.getStatus() != PaymentStatus.PAID) {
+            String msg = (paymentResponse != null && paymentResponse.getMessage() != null)
+                    ? paymentResponse.getMessage()
+                    : "Zahlung abgelehnt oder keine Antwort vom Zahlungsservice.";
+            throw new IllegalStateException("Bestellung konnte nicht bezahlt werden: " + msg);
+        }
+
+        // -------------------------------
+        // Nur wenn Payment OK -> Order speichern
+        // -------------------------------
         order.setTotalAmount(total);
+
+        //  Feld für Transaktions-ID
+        // order.setPaymentTransactionId(paymentResponse.getTransactionId());
 
         Order saved = orderRepository.save(order);
 
@@ -77,7 +120,6 @@ public class OrderService {
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
-
 
     private OrderResponse mapToResponse(Order order) {
         OrderResponse response = new OrderResponse();

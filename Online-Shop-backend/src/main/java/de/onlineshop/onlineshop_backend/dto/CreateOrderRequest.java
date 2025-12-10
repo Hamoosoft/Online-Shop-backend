@@ -28,6 +28,22 @@ public class CreateOrderRequest {
         this.customerEmail = customerEmail;
     }
 
+    public Long getAddressId() {
+        return addressId;
+    }
+
+    public void setAddressId(Long addressId) {
+        this.addressId = addressId;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
     public List<OrderItemRequest> getItems() {
         return items;
     }
