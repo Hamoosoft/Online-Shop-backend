@@ -8,7 +8,7 @@ on:
 jobs:
 
   backend:
-    name: Backend - Build & Test
+    name: Backend & Payment – Build & Test
     runs-on: ubuntu-latest
 
     steps:
@@ -31,7 +31,7 @@ jobs:
 
 
   frontend:
-    name: Frontend - Build, Lint & Audit
+    name: Frontend – Build, Lint & Audit
     runs-on: ubuntu-latest
 
     steps:
@@ -42,6 +42,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: online-shop-frontend/package-lock.json
 
       - name: Install Dependencies
         working-directory: ./online-shop-frontend
@@ -82,7 +83,8 @@ jobs:
         with:
           languages: java, javascript
 
-      # 🔑 Custom Builds statt Autobuild
+      # ❌ KEIN Autobuild (du hast mehrere Projekte!)
+      # ✅ Custom Builds:
       - name: Build Backend for CodeQL
         working-directory: ./Online-Shop-backend
         run: mvn -B -DskipTests clean package
@@ -93,3 +95,47 @@ jobs:
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+
+
+  ghcr:
+    name: Build & Push Docker Images to GHCR
+    runs-on: ubuntu-latest
+    needs: [backend, frontend, security]
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & Push Backend Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./Online-Shop-backend
+          push: true
+          tags: ghcr.io/${{ github.repository }}/onlineshop-backend:latest
+
+      - name: Build & Push Payment Service Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./payment-service
+          push: true
+          tags: ghcr.io/${{ github.repository }}/payment-service:latest
+
+      - name: Build & Push Frontend Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./online-shop-frontend
+          push: true
+          tags: ghcr.io/${{ github.repository }}/onlineshop-frontend:latest
