@@ -11,6 +11,10 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
   const [paymentMethod, setPaymentMethod] = useState("INVOICE"); // INVOICE, CARD, PAYPAL
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // verhindert Redirect wenn Warenkorb nach Bestellung geleert wird
+  const [orderPlaced, setOrderPlaced] = useState(false);
 
   const totalPrice = cartItems.reduce(
     (sum, item) => sum + Number(item.price) * item.quantity,
@@ -22,7 +26,9 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
       navigate("/login");
       return;
     }
-    if (cartItems.length === 0) {
+
+    // nur umleiten, wenn noch NICHT bestellt wurde
+    if (!orderPlaced && cartItems.length === 0) {
       navigate("/cart");
       return;
     }
@@ -30,25 +36,26 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
     const loadAddresses = async () => {
       setLoadingAddresses(true);
       setError("");
+
       try {
         const resp = await fetch("http://localhost:9090/api/addresses", {
           headers: {
             Authorization: `Bearer ${authUser.token}`,
           },
         });
+
         if (!resp.ok) {
           const text = await resp.text();
           throw new Error(text || "Fehler beim Laden der Adressen");
         }
+
         const data = await resp.json();
         const list = Array.isArray(data) ? data : [];
         setAddresses(list);
+
         const defaultAddress = list.find((a) => a.defaultAddress);
-        if (defaultAddress) {
-          setSelectedAddressId(defaultAddress.id);
-        } else if (list.length > 0) {
-          setSelectedAddressId(list[0].id);
-        }
+        if (defaultAddress) setSelectedAddressId(defaultAddress.id);
+        else if (list.length > 0) setSelectedAddressId(list[0].id);
       } catch (err) {
         setError(err.message || "Unbekannter Fehler beim Laden");
       } finally {
@@ -57,7 +64,7 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
     };
 
     loadAddresses();
-  }, [authUser, cartItems, navigate]);
+  }, [authUser, cartItems, navigate, orderPlaced]);
 
   const handleNext = () => {
     if (step === 1 && !selectedAddressId) {
@@ -67,13 +74,12 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
     setStep((s) => Math.min(3, s + 1));
   };
 
-  const handleBack = () => {
-    setStep((s) => Math.max(1, s - 1));
-  };
+  const handleBack = () => setStep((s) => Math.max(1, s - 1));
 
   const handleSubmitOrder = async () => {
     setSubmitting(true);
     setError("");
+    setSuccessMessage("");
 
     try {
       const customerName = authUser.name || authUser.email;
@@ -102,15 +108,43 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
       const text = await resp.text();
 
       if (!resp.ok) {
-        throw new Error(text || "Fehler beim Absenden der Bestellung");
+        const msg =
+          text && text.trim().length > 0
+            ? text
+            : `Fehler beim Absenden der Bestellung (Status ${resp.status}).`;
+        throw new Error(msg);
       }
 
-      const data = JSON.parse(text);
-      if (onOrderCompleted) {
-        onOrderCompleted(data.id);
+      let data = null;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        // falls Backend mal kein JSON sendet
       }
+
+      const orderId = data?.id;
+
+      // ✅ Markiere: Bestellung ist raus -> Checkout bleibt stehen
+      setOrderPlaced(true);
+
+      // ✅ User-Nachricht: “Payment passiert im Hintergrund”
+      const prettyId = orderId ? `#${orderId}` : "";
+      const msg = `✅ Vielen Dank! Ihre Bestellung ${prettyId} ist bei uns eingegangen.
+
+Wir prüfen die Zahlung  und schicken Ihnen in Kürze eine Bestätigung per E-Mail.
+Sie müssen nichts weiter tun – wir kümmern uns darum.`;
+
+      setSuccessMessage(msg);
+
+      // ✅ Warenkorb leeren (ok)
+      if (onOrderCompleted) {
+        onOrderCompleted(orderId ?? null);
+      }
+
+      // ✅ 15 Sekunden sichtbar lassen, erst dann weiterleiten
+      
     } catch (err) {
-      setError(err.message || "Unbekannter Fehler beim Bestellen");
+      setError(err.message || "Unbekannter Fehler beim Bestellen.");
     } finally {
       setSubmitting(false);
     }
@@ -128,7 +162,18 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
         </p>
       </div>
 
-      {/* Schrittanzeige */}
+      {successMessage && (
+        <p className="info-text" style={{ marginTop: "0.6rem", color: "green", whiteSpace: "pre-line" }}>
+          {successMessage}
+        </p>
+      )}
+
+      {error && (
+        <p className="info-text error" style={{ marginTop: "0.6rem" }}>
+          Fehler: {error}
+        </p>
+      )}
+
       <div className="checkout-steps card">
         <div className={"checkout-step" + (step >= 1 ? " active" : "")}>
           <div className="checkout-step-number">1</div>
@@ -144,15 +189,8 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
         </div>
       </div>
 
-      {error && (
-        <p className="info-text error" style={{ marginTop: "0.6rem" }}>
-          Fehler: {error}
-        </p>
-      )}
-
       <div className="checkout-layout">
         <div className="checkout-main">
-          {/* STEP 1: Adressen */}
           {step === 1 && (
             <div className="card">
               <h3 className="section-title">Lieferadresse wählen</h3>
@@ -211,7 +249,6 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
             </div>
           )}
 
-          {/* STEP 2: Payment */}
           {step === 2 && (
             <div className="card">
               <h3 className="section-title">Zahlungsmethode</h3>
@@ -227,7 +264,7 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
                   <div>
                     <div className="payment-title">Rechnung</div>
                     <div className="payment-desc">
-                      Zahlung auf Rechnung – ideal für das Projekt.
+                      Zahlung auf Rechnung.
                     </div>
                   </div>
                 </label>
@@ -243,7 +280,7 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
                   <div>
                     <div className="payment-title">Kreditkarte (Demo)</div>
                     <div className="payment-desc">
-                      Nur zu Demonstrationszwecken – keine echte Zahlung.
+                       – keine echte Zahlung.
                     </div>
                   </div>
                 </label>
@@ -267,7 +304,6 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
             </div>
           )}
 
-          {/* STEP 3: Übersicht */}
           {step === 3 && (
             <div className="card">
               <h3 className="section-title">Bestellübersicht</h3>
@@ -295,15 +331,11 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
                   <div className="address-name">
                     {currentAddress.firstName} {currentAddress.lastName}
                   </div>
-                  <div className="address-line">
-                    {currentAddress.street}
-                  </div>
+                  <div className="address-line">{currentAddress.street}</div>
                   <div className="address-line">
                     {currentAddress.postalCode} {currentAddress.city}
                   </div>
-                  <div className="address-line">
-                    {currentAddress.country}
-                  </div>
+                  <div className="address-line">{currentAddress.country}</div>
                   {currentAddress.additionalInfo && (
                     <div className="address-line address-additional">
                       {currentAddress.additionalInfo}
@@ -322,17 +354,19 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
                 {paymentMethod === "CARD" && "Kreditkarte (Demo)"}
                 {paymentMethod === "PAYPAL" && "PayPal (Demo)"}
               </div>
+
+              <p className="form-hint" style={{ marginTop: "0.8rem" }}>
+                Hinweis: Die Zahlung wird  verarbeitet. Du erhältst danach eine Bestätigung.
+              </p>
             </div>
           )}
         </div>
 
-        {/* Rechte Spalte: Gesamtsumme + Buttons */}
         <aside className="checkout-sidebar">
           <div className="card">
             <h3 className="section-title">Gesamtbetrag</h3>
             <p>
-              Zwischensumme:{" "}
-              <strong>{totalPrice.toFixed(2)} €</strong>
+              Zwischensumme: <strong>{totalPrice.toFixed(2)} €</strong>
             </p>
             <p className="form-hint">
               (Alle Preise sind Demo-Preise für das HSIG-Projekt 😉)
@@ -365,9 +399,7 @@ export default function CheckoutPage({ cartItems, authUser, onOrderCompleted }) 
                   onClick={handleSubmitOrder}
                   disabled={submitting}
                 >
-                  {submitting
-                    ? "Bestellung wird gesendet..."
-                    : "Jetzt kostenpflichtig bestellen"}
+                  {submitting ? "Bestellung wird gesendet..." : "Bestellung abschicken"}
                 </button>
               )}
 

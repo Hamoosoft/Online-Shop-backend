@@ -1,4 +1,5 @@
-package de.onlineshop.onlineshop_backend.payment;
+package die.onlineshop.payment.dto;
+
 
 public class PaymentResponse {
 

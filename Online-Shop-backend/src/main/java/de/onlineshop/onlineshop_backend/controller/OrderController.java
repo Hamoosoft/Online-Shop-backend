@@ -26,16 +26,18 @@ public class OrderController {
         try {
             OrderResponse created = orderService.createOrder(request);
             return ResponseEntity.ok(created);
+
         } catch (IllegalArgumentException ex) {
             // z.B. keine Items, Produkt nicht gefunden, etc.
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body("Ungültige Bestellung: " + ex.getMessage());
-        } catch (IllegalStateException ex) {
-            // z.B. Payment abgelehnt oder Payment-Service down
+
+        } catch (Exception ex) {
+            // z.B. RabbitMQ down, DB down, etc. -> Serverproblem
             return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(ex.getMessage());
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Serverfehler beim Erstellen der Bestellung: " + ex.getMessage());
         }
     }
 

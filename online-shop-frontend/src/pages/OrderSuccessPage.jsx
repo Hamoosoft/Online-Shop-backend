@@ -16,7 +16,7 @@ export default function OrderSuccessPage({ authUser }) {
         <div className="order-success-icon">✅</div>
 
         <p>
-          Deine Bestellung wurde erfolgreich gespeichert.
+          Deine Bestellung wurde erfolgreich gespeichert. Wir schicken Ihnen in Kürze eine Bestätigung per E-Mail.
         </p>
 
         {orderId && (
@@ -26,9 +26,8 @@ export default function OrderSuccessPage({ authUser }) {
         )}
 
         <p className="info-text">
-          Du erhältst eine Übersicht deiner Bestellungen unter{" "}
-          <strong>„Bestellungen“</strong>, sobald wir diese Seite angebunden
-          haben.
+          Sie koennen Ihren Bestellungenstatus Jede Zeit unter{" "}
+          <strong>„Bestellungen ansehen.“</strong>, 
         </p>
 
         <div className="order-success-actions">

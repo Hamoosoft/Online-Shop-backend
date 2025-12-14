@@ -11,46 +11,8 @@ public class OrderResponse {
     private String customerEmail;
     private BigDecimal totalAmount;
     private LocalDateTime createdAt;
+    private String status;
     private List<OrderItemResponse> items;
-
-    public static class OrderItemResponse {
-        private Long productId;
-        private String productName;
-        private BigDecimal unitPrice;
-        private int quantity;
-
-        public Long getProductId() {
-            return productId;
-        }
-
-        public void setProductId(Long productId) {
-            this.productId = productId;
-        }
-
-        public String getProductName() {
-            return productName;
-        }
-
-        public void setProductName(String productName) {
-            this.productName = productName;
-        }
-
-        public BigDecimal getUnitPrice() {
-            return unitPrice;
-        }
-
-        public void setUnitPrice(BigDecimal unitPrice) {
-            this.unitPrice = unitPrice;
-        }
-
-        public int getQuantity() {
-            return quantity;
-        }
-
-        public void setQuantity(int quantity) {
-            this.quantity = quantity;
-        }
-    }
 
     // --- Getter/Setter ---
 
@@ -94,11 +56,59 @@ public class OrderResponse {
         this.createdAt = createdAt;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     public List<OrderItemResponse> getItems() {
         return items;
     }
 
     public void setItems(List<OrderItemResponse> items) {
         this.items = items;
+    }
+
+    // --- Inner DTO ---
+    public static class OrderItemResponse {
+        private Long productId;
+        private String productName;
+        private BigDecimal unitPrice;
+        private int quantity;
+
+        public Long getProductId() {
+            return productId;
+        }
+
+        public void setProductId(Long productId) {
+            this.productId = productId;
+        }
+
+        public String getProductName() {
+            return productName;
+        }
+
+        public void setProductName(String productName) {
+            this.productName = productName;
+        }
+
+        public BigDecimal getUnitPrice() {
+            return unitPrice;
+        }
+
+        public void setUnitPrice(BigDecimal unitPrice) {
+            this.unitPrice = unitPrice;
+        }
+
+        public int getQuantity() {
+            return quantity;
+        }
+
+        public void setQuantity(int quantity) {
+            this.quantity = quantity;
+        }
     }
 }

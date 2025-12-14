@@ -27,33 +27,58 @@ export default function OrdersPage({ authUser }) {
   }
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      setLoading(true);
-      setError("");
+  if (!authUser) return;
 
-      try {
-        const response = await fetch(
-          `http://localhost:9090/api/orders?email=${encodeURIComponent(
-            authUser.email
-          )}`
-        );
+  let intervalId;
 
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(text || "Fehler beim Laden der Bestellungen");
-        }
+  const fetchOrders = async () => {
+    setLoading(true);
+    setError("");
 
-        const data = await response.json();
-        setOrders(Array.isArray(data) ? data : []);
-      } catch (err) {
-        setError(err.message || "Unbekannter Fehler beim Laden der Bestellungen");
-      } finally {
-        setLoading(false);
+    try {
+      const response = await fetch(
+        `http://localhost:9090/api/orders?email=${encodeURIComponent(
+          authUser.email
+        )}`
+      );
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Fehler beim Laden der Bestellungen");
       }
-    };
 
-    fetchOrders();
-  }, [authUser.email]);
+      const data = await response.json();
+      const list = Array.isArray(data) ? data : [];
+      setOrders(list);
+
+      // 🔁 Prüfen, ob noch offene Zahlungen existieren
+      const hasPending = list.some((o) =>
+        (o.status || "").toUpperCase().includes("PENDING")
+      );
+
+      // Wenn keine offenen Zahlungen mehr → Polling stoppen
+      if (!hasPending && intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    } catch (err) {
+      setError(err.message || "Unbekannter Fehler beim Laden der Bestellungen");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial laden
+  fetchOrders();
+
+  // 🔁 Alle 3 Sekunden neu laden
+  intervalId = setInterval(fetchOrders, 15000);
+
+  return () => {
+    if (intervalId) clearInterval(intervalId);
+  };
+}, [authUser.email]);
+
 
   // Zusammenfassung (Anzahl + Gesamtumsatz)
   const summary = useMemo(() => {
@@ -76,32 +101,35 @@ export default function OrdersPage({ authUser }) {
 
   // Status → Label + CSS-Klasse
   const getStatusInfo = (order) => {
-    const raw = (
-      order.status ??
-      order.orderStatus ??
-      order.state ??
-      ""
-    )
-      .toString()
-      .toUpperCase();
+  const raw = (order.status || "").toUpperCase();
 
-    if (!raw) {
-      return { label: "In Bearbeitung", className: "status-pill status-pending" };
-    }
-    if (raw.includes("NEW") || raw.includes("CREATED")) {
-      return { label: "Neu", className: "status-pill status-new" };
-    }
-    if (raw.includes("PROCESS") || raw.includes("PENDING")) {
-      return { label: "In Bearbeitung", className: "status-pill status-pending" };
-    }
-    if (raw.includes("PAID") || raw.includes("DONE") || raw.includes("COMPLETED")) {
-      return { label: "Abgeschlossen", className: "status-pill status-completed" };
-    }
-    if (raw.includes("CANCEL")) {
-      return { label: "Storniert", className: "status-pill status-cancelled" };
-    }
-    return { label: raw, className: "status-pill status-default" };
+  if (!raw || raw === "PENDING_PAYMENT") {
+    return {
+      label: "Wird bezahlt…",
+      className: "status-pill status-pending"
+    };
+  }
+
+  if (raw === "PAID") {
+    return {
+      label: "Bezahlt",
+      className: "status-pill status-completed"
+    };
+  }
+
+  if (raw === "PAYMENT_FAILED") {
+    return {
+      label: "Zahlung fehlgeschlagen",
+      className: "status-pill status-cancelled"
+    };
+  }
+
+  return {
+    label: raw,
+    className: "status-pill status-default"
   };
+};
+
 
   return (
     <div>

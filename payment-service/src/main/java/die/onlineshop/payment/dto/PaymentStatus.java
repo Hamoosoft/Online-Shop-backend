@@ -1,4 +1,4 @@
-package de.onlineshop.onlineshop_backend.payment;
+package die.onlineshop.payment.dto;
 
 public enum PaymentStatus {
     PAID,

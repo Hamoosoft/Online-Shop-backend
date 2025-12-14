@@ -1,4 +1,5 @@
-package de.onlineshop.onlineshop_backend.payment;
+package die.onlineshop.payment.dto;
+
 
 import java.math.BigDecimal;
 
@@ -13,8 +14,8 @@ public class PaymentRequest {
     public PaymentRequest() {
     }
 
-    public PaymentRequest(BigDecimal amount, String currency, String orderId,
-                          String customerEmail, String paymentMethod) {
+    public PaymentRequest(BigDecimal amount, String currency,
+                          String orderId, String customerEmail, String paymentMethod) {
         this.amount = amount;
         this.currency = currency;
         this.orderId = orderId;

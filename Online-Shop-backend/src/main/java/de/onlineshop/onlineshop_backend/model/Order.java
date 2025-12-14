@@ -2,6 +2,7 @@ package de.onlineshop.onlineshop_backend.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,18 +17,24 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // sehr einfache Kundendaten (später könnt ihr User-Entity einführen)
+    // sehr einfache Kundendaten
+    @Setter
     @Column(nullable = false)
     private String customerName;
 
+    @Setter
     @Column(nullable = false)
     private String customerEmail;
 
+    @Setter
     @Column(nullable = false)
     private BigDecimal totalAmount;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
+    @Setter
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
 
     @OneToMany(
             mappedBy = "order",
@@ -51,25 +58,20 @@ public class Order {
     public String getCustomerName() {
         return customerName;
     }
+    public void setOrderStatus(OrderStatus status) {
+        this.status = status;
+    }
 
-    public void setCustomerName(String customerName) {
-        this.customerName = customerName;
+    public OrderStatus getOrderStatus() {
+        return status;
     }
 
     public String getCustomerEmail() {
         return customerEmail;
     }
 
-    public void setCustomerEmail(String customerEmail) {
-        this.customerEmail = customerEmail;
-    }
-
     public BigDecimal getTotalAmount() {
         return totalAmount;
-    }
-
-    public void setTotalAmount(BigDecimal totalAmount) {
-        this.totalAmount = totalAmount;
     }
 
     public LocalDateTime getCreatedAt() {
